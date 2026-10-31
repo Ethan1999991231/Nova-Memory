@@ -24,12 +24,12 @@ $exe = (Resolve-Path (Join-Path $PSScriptRoot '..\outputs\NovaMemory-final.exe')
 $out = Join-Path $PSScriptRoot '..\assets'
 Get-Process NovaMemory* -ErrorAction SilentlyContinue | Stop-Process -Force
 Start-Sleep -Milliseconds 300
-$process = Start-Process -FilePath $exe -PassThru
+$process = Start-Process -FilePath $exe -ArgumentList '--no-elevate' -PassThru
 try {
     for ($i = 0; $i -lt 40 -and $process.MainWindowHandle -eq 0; $i++) { Start-Sleep -Milliseconds 100; $process.Refresh() }
     $handle = $process.MainWindowHandle
     if ($handle -eq 0) { throw 'window did not appear' }
-    [CacheUi]::SetWindowPos($handle, [IntPtr](-1), 40, 40, 1120, 790, 0x0040) | Out-Null
+    [CacheUi]::SetWindowPos($handle, [IntPtr](-2), 40, 40, 1120, 790, 0x0040) | Out-Null
     [CacheUi]::SetForegroundWindow($handle) | Out-Null
     Start-Sleep -Milliseconds 700
     function Save-Shot([string]$name) {
@@ -62,19 +62,19 @@ try {
     Write-Output ("seeded {0} files in {1}" -f (Get-ChildItem $seed -File).Count, $seed)
 
     Click-Client 600 20
-    Click-Client 100 233
+    Click-Client 100 333
     Start-Sleep -Milliseconds 400
     $clientSize = New-Object 'CacheUi+RECT'
     [CacheUi]::GetClientRect($handle, [ref]$clientSize) | Out-Null
     Write-Output ("client {0}x{1}" -f $clientSize.Right, $clientSize.Bottom)
-    Click-Client 742 183
-    Start-Sleep -Milliseconds 1800
+    Click-Client 470 183
+    Start-Sleep -Milliseconds 5000
     Save-Shot 'probe-cache-scan.png'
 
-    Click-Client 521 346
+    Click-Client 521 373
     Start-Sleep -Milliseconds 400
     Save-Shot 'probe-cache-confirm.png'
-    Click-Client 638 487
+    Click-Client 638 475
     Start-Sleep -Milliseconds 2500
     Save-Shot 'probe-cache-cleaned.png'
     $remaining = (Get-ChildItem $seed -File -ErrorAction SilentlyContinue | Measure-Object).Count

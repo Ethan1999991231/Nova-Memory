@@ -42,7 +42,7 @@ $exePath = if (Test-Path $Exe) { (Resolve-Path $Exe).Path } else {
 Get-Process NovaMemory* -ErrorAction SilentlyContinue | Stop-Process -Force
 Start-Sleep -Milliseconds 300
 
-$process = Start-Process -FilePath $exePath -PassThru
+$process = Start-Process -FilePath $exePath -ArgumentList '--no-elevate' -PassThru
 
 try {
     for ($i = 0; $i -lt 40 -and $process.MainWindowHandle -eq 0; $i++) {
@@ -55,7 +55,7 @@ try {
     # screen capture and the synthetic click both land on NovaMemory itself.
     # Restore first: a maximized window would silently break the fixed-size contract.
     [NativeUi]::ShowWindow($handle, 9) | Out-Null
-    [NativeUi]::SetWindowPos($handle, [IntPtr](-1), 40, 40, 1120, 790, 0x0040) | Out-Null
+    [NativeUi]::SetWindowPos($handle, [IntPtr](-2), 40, 40, 1120, 790, 0x0040) | Out-Null
     [NativeUi]::SetForegroundWindow($handle) | Out-Null
     Start-Sleep -Milliseconds 700
 
@@ -95,21 +95,29 @@ try {
     # harmless header click warms the window up before the card click that matters.
     Click-Client 600 20
     # Centre of the bottom-left status card: 192x78 at (14, clientHeight-106).
-    Click-Client 110 ($client.Bottom - 106 + 39)
-    Start-Sleep -Milliseconds 500
-    Save-Shot (Join-Path $OutDir 'verify-popover.png')
-
+    $cardY = $client.Bottom - 106 + 39
     # Panel geometry mirrors ComputerPanelRect(): 420x432 at (14, clientHeight-118), clamped to y>=74.
     $panelHeight = 432
     $panelTop = $client.Bottom - 118 - $panelHeight
     if ($panelTop -lt 74) { $panelTop = 74 }
-    # 复制配置 button: 150x36 at (panel.X+22, panel.bottom-46).
-    Click-Client (14 + 22 + 75) ($panelTop + $panelHeight - 46 + 18)
-    Start-Sleep -Milliseconds 250
-    Save-Shot (Join-Path $OutDir 'verify-copy.png')
+    $copyX = 14 + 22 + 75
+    $copyY = $panelTop + $panelHeight - 46 + 18
     Add-Type -AssemblyName System.Windows.Forms
-    $clipboard = [System.Windows.Forms.Clipboard]::GetText()
-    if ([string]::IsNullOrWhiteSpace($clipboard)) { $clipboard = Get-Clipboard -Raw }
+    $clipboard = ''
+    for ($attempt = 0; $attempt -lt 3 -and [string]::IsNullOrWhiteSpace($clipboard); $attempt++) {
+        [NativeUi]::SetForegroundWindow($handle) | Out-Null
+        Start-Sleep -Milliseconds 150
+        Click-Client 110 $cardY
+        Start-Sleep -Milliseconds 400
+        Save-Shot (Join-Path $OutDir 'verify-popover.png')
+        # 复制配置 button: 150x36 at (panel.X+22, panel.bottom-46).
+        Click-Client $copyX $copyY
+        Start-Sleep -Milliseconds 300
+        Save-Shot (Join-Path $OutDir 'verify-copy.png')
+        $clipboard = [System.Windows.Forms.Clipboard]::GetText()
+        if ([string]::IsNullOrWhiteSpace($clipboard)) { $clipboard = Get-Clipboard -Raw }
+        if ([string]::IsNullOrWhiteSpace($clipboard)) { Write-Output "copy attempt $($attempt + 1) produced an empty clipboard" }
+    }
     if ([string]::IsNullOrWhiteSpace($clipboard) -or $clipboard -notmatch 'NovaMemory' -or $clipboard -notmatch 'ETHAN-COMPUTER') {
         throw "copy button did not reach the clipboard: '$clipboard'"
     }

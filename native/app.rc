@@ -1,4 +1,4 @@
-﻿// NovaMemory native resources.
+// NovaMemory native resources.
 // Keep this file ASCII-only so rc.exe never depends on a code page.
 
 #include "resource.h"

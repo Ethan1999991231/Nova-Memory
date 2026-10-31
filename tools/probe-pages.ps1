@@ -1,4 +1,4 @@
-# Walks every left-nav page, the maintenance tabs, and the settings tabs, and
+﻿# Walks every left-nav page, the maintenance tabs, and the settings tabs, and
 # captures a screenshot of each so the new surfaces can be eyeballed in one pass.
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
@@ -21,13 +21,13 @@ $exe = (Resolve-Path (Join-Path $PSScriptRoot '..\outputs\NovaMemory-final.exe')
 $out = Join-Path $PSScriptRoot '..\assets'
 Get-Process NovaMemory* -ErrorAction SilentlyContinue | Stop-Process -Force
 Start-Sleep -Milliseconds 300
-$process = Start-Process -FilePath $exe -PassThru
+$process = Start-Process -FilePath $exe -ArgumentList '--no-elevate' -PassThru
 try {
     for ($i = 0; $i -lt 40 -and $process.MainWindowHandle -eq 0; $i++) { Start-Sleep -Milliseconds 100; $process.Refresh() }
     $handle = $process.MainWindowHandle
     if ($handle -eq 0) { throw 'window did not appear' }
     [PageUi]::ShowWindow($handle, 9) | Out-Null
-    [PageUi]::SetWindowPos($handle, [IntPtr](-1), 40, 40, 1120, 790, 0x0040) | Out-Null
+    [PageUi]::SetWindowPos($handle, [IntPtr](-2), 40, 40, 1120, 790, 0x0040) | Out-Null
     [PageUi]::SetForegroundWindow($handle) | Out-Null
     Start-Sleep -Milliseconds 700
     function Save-Shot([string]$name) {
@@ -83,7 +83,7 @@ try {
     Start-Sleep -Milliseconds 600
     Save-Shot 'page-settings-general.png'
 
-    Click-Client 516 664
+    Click-Client 516 684
     Start-Sleep -Milliseconds 900
     Save-Shot 'page-settings-registered.png'
 

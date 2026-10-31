@@ -1,5 +1,5 @@
-$ErrorActionPreference = 'Stop'
-$source = Get-Content (Join-Path $PSScriptRoot '..\native\main.cpp') -Raw
+﻿$ErrorActionPreference = 'Stop'
+$source = Get-Content (Join-Path $PSScriptRoot '..\native\main.cpp') -Raw -Encoding UTF8
 $checks = [ordered]@{
     appearance_config = ($source.Contains('\"theme\"') -and $source.Contains('\"opacity\"') -and $source.Contains('\"accent\"'))
     three_themes = ($source -match '青雾' -and $source -match '深海' -and $source -match '月白')
@@ -17,6 +17,33 @@ $checks = [ordered]@{
     config_live_refresh = (($source -match 'SetTimer\(g_window,6,1000') -and ($source -match 'w==6') -and ($source -match 'RefreshComputerUsage'))
     tray_icon_and_menu = ($source -match 'Shell_NotifyIconW' -and $source -match 'NOTIFYICONDATAW' -and $source -match 'TrackPopupMenu' -and $source -match 'TRAY_EXIT' -and $source -match 'HideToTray')
     visual_verification_harness = (Test-Path (Join-Path $PSScriptRoot '..\tools\verify-window.ps1')) -and (Test-Path (Join-Path $PSScriptRoot 'ui_visual.ps1'))
+    cache_probe_and_clean = ($source -match 'CacheTargets' -and $source -match 'SHQueryRecycleBinW' -and $source -match 'recycleBin' -and $source -match 'WM_CACHE_SCAN_DONE' -and $source -match 'WM_CACHE_CLEAN_DONE' -and $source -match 'DrawMeter' -and $source -match 'DrawCache')
+    registry_health_scan = ($source -match 'ScanStartupIssues' -and $source -match 'ScanUninstallIssues' -and $source -match 'ScanFileAssocIssues' -and $source -match 'ScanAppPathIssues' -and $source -match 'RegDeleteKeyExW' -and $source -match 'DumpKeyValues' -and $source -match 'WM_REGISTRY_SCAN_DONE')
+    maintenance_tab_order = ($source -match 'L"注册表清理",L"缓存清理",L"进程管理",L"启动项"')
+    new_navigation_pages = ($source -match 'Page::Monitor' -and $source -match 'Page::AppCleanup' -and $source -match 'Page::Storage' -and $source -match 'Page::Risk' -and $source -match 'Page::Assistant' -and $source -match 'void DrawMonitor' -and $source -match 'void DrawStorage' -and $source -match 'void DrawRisk' -and $source -match 'void DrawAssistant')
+    storage_and_app_scans = ($source -match 'StartStorageScan' -and $source -match 'StartAppScan' -and $source -match 'WM_STORAGE_SCAN_DONE' -and $source -match 'WM_APP_SCAN_DONE' -and $source -match 'RecyclePath')
+    risk_checks_open_settings = ($source -match 'RunRiskChecks' -and $source -match 'ms-settings:windowsdefender' -and $source -match 'UserAccountControlSettings.exe' -and $source -match 'OpenWindowsPage')
+    offline_assistant = ($source -match 'BuildAssistantAnswer' -and $source -match 'AssistantAdvice' -and $source -match 'ApplyAdviceAction')
+    register_and_unregister = ($source -match 'RegisterShortcut' -and $source -match 'UnregisterShortcut' -and $source -match 'BestExeForShortcut' -and $source -match 'CompareVersion' -and $source -match 'ReportRegisterError' -and $source -match 'register_error')
+    update_check = ($source -match 'StartUpdateCheck' -and $source -match 'Ethan1999991231/Nova-Memory/releases/latest' -and $source -match 'WM_UPDATE_DONE' -and $source -match 'WinHttpOpen')
+    error_banner = ($source -match 'ShowBanner' -and $source -match 'DrawBanner' -and $source -match 'BANNER_MS')
+    autostart_switch = ($source -match 'AutoStartRegistered' -and $source -match 'SetAutoStart' -and $source -match 'DrawSwitch' -and $source -match '开机自启动')
+    custom_background_image = ($source -match 'PickBackgroundImage' -and $source -match 'EnsureBackgroundImage' -and $source -match 'DrawBackgroundImage' -and $source -match 'GetOpenFileNameW' -and $source -match 'Unslashify')
+    utf8_config_io = ($source -match 'MultiByteToWideChar\(CP_UTF8' -and $source -match 'WideCharToMultiByte\(CP_UTF8' -and $source -match 'ReadConfigText')
+    custom_startup_entry = ($source -match 'PickExecutablePath' -and $source -match 'RegisterCustomStartup' -and $source -match 'AddCustomStartupEntry' -and $source -match '自定义启动项')
+    registry_backup_utf16 = ($source -match 'Windows Registry Editor Version 5\.00' -and $source -notmatch 'std::wofstream' -and $source -match 'const char bom\[2\]' -and $source -match 'void WriteHexBlock\(std::wstring&')
+    registry_delete_verification = ($source -match 'stillThere' -and $source -match 'RegDeleteKeyExW')
+    auto_elevation = ($source -match 'bool IsElevated\(\)' -and $source -match 'L"runas"' -and $source -match '--no-elevate' -and $source -match 'g_elevationDenied')
+    autostart_without_uac = ($source -match 'AUTOSTART_TASK' -and $source -match 'schtasks\.exe /create' -and $source -match '/rl highest' -and $source -match 'SetRunKeyAutoStart')
+    single_instance = ($source -match 'NovaMemorySingleInstance' -and $source -match 'ERROR_ALREADY_EXISTS' -and $source -match 'SetForegroundWindow\(existing\)')
+    optimize_history_report = ($source -match 'AppendHistoryRecord' -and $source -match 'ReadHistory' -and $source -match 'history\.txt' -and $source -match '本周释放')
+    big_file_locator = ($source -match 'StartBigFileScan' -and $source -match 'WM_BIGFILE_SCAN_DONE' -and $source -match 'BIG_FILE_LIMIT' -and $source -match '寻找大文件')
+    global_tint = ($source -match 'TintColor' -and $source -match 'g_tintDraft' -and $source -match '全局整体色' -and $source -match '\\"tint\\"')
+    window_never_topmost = ($source -match 'HWND_NOTOPMOST')
+    long_text_trimmed = ($source -match 'StringFormatFlagsNoWrap' -and $source -match 'StringTrimmingEllipsisCharacter')
+    windows_version_heuristic = ($source -match 'buildNumber>=22000' -and $source -match 'L"Windows 11"')
+    tray_autostart_toggle = ($source -match 'TRAY_AUTOSTART' -and $source -match 'MF_CHECKED' -and $source -match 'L"开机自动启动"')
+    startup_toggle_verified = ($source -match '状态已核验' -and $source -match '启动项状态未生效')
 }
 $failed = @($checks.GetEnumerator() | Where-Object { -not $_.Value } | ForEach-Object { $_.Key })
 if ($failed.Count) {
